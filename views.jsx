@@ -45,11 +45,20 @@ const SubcommitteeCard = ({ sub, onOpen, statuses }) => {
 };
 
 // ─── HOME ──────────────────────────────────────────────────────────────
-const HomeView = ({ navigate, statuses, me }) => {
+const HomeView = ({ navigate, statuses }) => {
   const totalElements = ELEMENTS.length;
-  const majorElements = ELEMENTS.filter(e => e.changeLevel === "MAJOR" || e.changeLevel === "REMOVED").length;
   const totalTasks = TASKS.length;
   const doneTasks  = TASKS.filter(t => statuses[t.id] === "complete").length;
+  const totalDCI = (window.LCME_DCI || []).reduce((s, std) => s + std.elements.length, 0);
+  const totalISA = (window.LCME_ISA || []).reduce((s, d) =>
+    s + d.items.length + d.subdomains.reduce((ss, sd) => ss + sd.items.length, 0), 0);
+  const memberCount = Object.values(SUBCOMMITTEES).reduce((s, sub) => {
+    const ids = new Set();
+    sub.coChairs.forEach(m => ids.add(m.email.toLowerCase()));
+    ids.add(sub.projectManager.email.toLowerCase());
+    sub.members.forEach(m => ids.add(m.email.toLowerCase()));
+    return s + ids.size;
+  }, 0);
 
   return (
     <>
@@ -57,9 +66,8 @@ const HomeView = ({ navigate, statuses, me }) => {
         <div className="hero__eyebrow">LCME 2027–28 DCI Cycle · Mount Sinai</div>
         <h1 className="hero__title">The Curriculum Task Force, in one place.</h1>
         <p className="hero__body">
-          Membership, assigned LCME elements, what the new DCI actually says, the changes
-          since 2026–27, and every task that has to be done before the June 2027 deadline —
-          searchable and trackable from your phone.
+          Membership, the full 2027–28 DCI by standard and element, the required ISA survey items,
+          and every task that has to be done before the June 2027 deadline — searchable from your phone.
         </p>
         <div className="hero__stats">
           <div className="hero__stat">
@@ -67,25 +75,22 @@ const HomeView = ({ navigate, statuses, me }) => {
             <span className="hero__stat-label">Subcommittees</span>
           </div>
           <div className="hero__stat">
-            <span className="hero__stat-value">{totalElements}</span>
-            <span className="hero__stat-label">LCME Elements</span>
+            <span className="hero__stat-value">{totalDCI || totalElements}</span>
+            <span className="hero__stat-label">DCI Elements</span>
           </div>
           <div className="hero__stat">
             <span className="hero__stat-value">{totalTasks}</span>
             <span className="hero__stat-label">Tasks tracked</span>
           </div>
           <div className="hero__stat">
-            <span className="hero__stat-value">{majorElements}</span>
-            <span className="hero__stat-label">Major / removed changes</span>
+            <span className="hero__stat-value">{totalISA}</span>
+            <span className="hero__stat-label">ISA survey items</span>
           </div>
         </div>
       </section>
 
       <section className="section">
-        <div className="row row--between" style={{ marginBottom: 14 }}>
-          <h2 className="h-section" style={{ margin: 0 }}>Pick your subcommittee</h2>
-          {me ? <span className="chip chip--strong">Signed in as {me}</span> : null}
-        </div>
+        <h2 className="h-section">Subcommittees</h2>
         <div className="grid grid--3">
           {Object.values(SUBCOMMITTEES).map(sub => (
             <SubcommitteeCard key={sub.key} sub={sub} statuses={statuses}
@@ -95,56 +100,71 @@ const HomeView = ({ navigate, statuses, me }) => {
       </section>
 
       <section className="section">
-        <h2 className="h-section">Quick links</h2>
-        <div className="resource-strip">
-          <a className="resource-tile" href={RESOURCES[0].url} target="_blank" rel="noreferrer">
-            <span className="resource-tile__icon"><Icon name="compass" size={20} /></span>
-            <div>
-              <div className="resource-tile__title">{RESOURCES[0].label} <Icon name="external" size={11} /></div>
-              <div className="resource-tile__desc">{RESOURCES[0].desc}</div>
+        <h2 className="h-section">Browse</h2>
+        <div className="home-pillow-grid">
+          <button className="home-pillow" onClick={() => navigate("/dci")}
+            style={{ "--accent": "var(--magenta)" }}>
+            <span className="home-pillow__icon"><Icon name="book" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow">2027–28 Cycle</div>
+              <div className="home-pillow__title">DCI 2027–28</div>
+              <div className="home-pillow__sub">12 standards · {totalDCI} elements with narratives, tables, and supporting docs.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/isa")}
+            style={{ "--accent": "var(--sky)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--sky)" }}><Icon name="target" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--sky)" }}>Student Survey</div>
+              <div className="home-pillow__title">Independent Student Analysis</div>
+              <div className="home-pillow__sub">{totalISA} required survey items across {(window.LCME_ISA || []).length} domains.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/members")}
+            style={{ "--accent": "var(--teal)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="users" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--teal)" }}>Roster</div>
+              <div className="home-pillow__title">Membership</div>
+              <div className="home-pillow__sub">{memberCount} members across all 3 subcommittees, plus filters per group.</div>
+            </div>
+          </button>
+          <a className="home-pillow" href={RESOURCES[0].url} target="_blank" rel="noreferrer"
+            style={{ "--accent": "var(--navy-2)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--navy-2)" }}><Icon name="compass" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--navy-2)" }}>External</div>
+              <div className="home-pillow__title">ASCEND Navigator <Icon name="external" size={12} /></div>
+              <div className="home-pillow__sub">Student-facing curriculum dashboard with phase, module, and EPO views.</div>
             </div>
           </a>
+        </div>
+      </section>
+
+      <section className="section">
+        <h2 className="h-section">More</h2>
+        <div className="resource-strip">
           <button className="resource-tile" onClick={() => navigate("/resources")}>
             <span className="resource-tile__icon"><Icon name="tree" size={20} /></span>
             <div>
-              <div className="resource-tile__title">{RESOURCES[1].label}</div>
-              <div className="resource-tile__desc">{RESOURCES[1].desc}</div>
+              <div className="resource-tile__title">Governance Org Chart</div>
+              <div className="resource-tile__desc">Reporting structure for the Dean and committees.</div>
             </div>
           </button>
           <button className="resource-tile" onClick={() => navigate("/mepos")}>
             <span className="resource-tile__icon"><Icon name="target" size={20} /></span>
             <div>
-              <div className="resource-tile__title">Medical Education Program Objectives</div>
-              <div className="resource-tile__desc">All 23 MEPOs grouped by competency domain.</div>
+              <div className="resource-tile__title">MEPOs (23 program objectives)</div>
+              <div className="resource-tile__desc">All Sinai MEPOs grouped by competency domain.</div>
             </div>
           </button>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="card">
-          <div className="row" style={{ marginBottom: 8 }}>
-            <span className="h-eyebrow">Browse</span>
-          </div>
-          <div className="row">
-            <button className="pill" onClick={() => navigate("/elements")}>
-              <Icon name="list" size={12} />&nbsp; All LCME elements ({totalElements})
-            </button>
-            <button className="pill" onClick={() => navigate("/tasks")}>
-              <Icon name="list" size={12} />&nbsp; All tasks ({totalTasks})
-            </button>
-            <button className="pill" onClick={() => navigate("/me")}>
-              <Icon name="users" size={12} />&nbsp; Who am I?
-            </button>
-            <a className="pill" href={RESOURCES[2].url} target="_blank" rel="noreferrer">
-              <Icon name="doc" size={12} />&nbsp; DCI Comparison PDF
-            </a>
-          </div>
-          {doneTasks > 0 ? (
-            <div style={{ marginTop: 14, fontSize: 13, color: "var(--muted)" }}>
-              Progress so far: <strong style={{ color: "var(--teal)" }}>{doneTasks}</strong> of {totalTasks} tasks marked complete on this device.
+          <button className="resource-tile" onClick={() => navigate("/tasks")}>
+            <span className="resource-tile__icon"><Icon name="list" size={20} /></span>
+            <div>
+              <div className="resource-tile__title">All tasks ({totalTasks})</div>
+              <div className="resource-tile__desc">{doneTasks > 0 ? `${doneTasks} marked complete on this device` : "Search, filter, and track status"}.</div>
             </div>
-          ) : null}
+          </button>
         </div>
       </section>
     </>
@@ -758,80 +778,63 @@ const AllTasksView = ({ navigate, statuses, setStatus }) => {
   );
 };
 
-// ─── Me (roster picker) ───────────────────────────────────────────────
-const MeView = ({ navigate, me, setMe, statuses, setStatus }) => {
-  // Find everyone across subcommittees with their roles
-  const everyone = useMemo(() => {
-    const map = new Map();
-    for (const sub of Object.values(SUBCOMMITTEES)) {
-      const add = (m, role) => {
-        const key = m.email.toLowerCase();
-        const entry = map.get(key) || { name: m.name, email: m.email, subs: [] };
-        entry.subs.push({ key: sub.key, name: sub.short, role });
-        map.set(key, entry);
-      };
-      sub.coChairs.forEach(m => add(m, "Co-chair"));
-      add(sub.projectManager, "PM");
-      sub.members.forEach(m => add(m, "Member"));
-    }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
+// (MeView removed — replaced with /members directory in docs.jsx)
 
-  const myEntry = me ? everyone.find(p => p.name === me) : null;
-
-  if (myEntry) {
-    // Show "my tasks" view
-    const myTasks = TASKS.filter(t => myEntry.subs.some(s => s.key === t.subcommittee));
-    return (
-      <>
-        <div className="row" style={{ marginBottom: 14 }}>
-          <div className="member-card__avatar" style={{ width: 56, height: 56, fontSize: 20 }}>{initialsFor(me)}</div>
-          <div>
-            <div className="h-eyebrow">Signed in as</div>
-            <h1 className="h-display" style={{ margin: 0 }}>{me}</h1>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-              {myEntry.subs.map(s => (
-                <button key={s.key} className="chip" onClick={() => navigate("/s/" + s.key)}>
-                  <span className="dot" />{s.role} · {s.name}
-                </button>
-              ))}
-            </div>
-          </div>
-          <span className="spacer" />
-          <button className="pill" onClick={() => setMe("")}>Sign out</button>
-        </div>
-
-        <h2 className="h-section">Your subcommittees' tasks</h2>
-        <TaskBoard tasks={myTasks} statuses={statuses} setStatus={setStatus} navigate={navigate} showElementLink={true} />
-      </>
-    );
-  }
+// ─── Saved view (tracked tasks) ───────────────────────────────────────
+const SavedView = ({ navigate, statuses, setStatus }) => {
+  const tracked = TASKS.filter(t => statuses[t.id] && statuses[t.id] !== "not-started");
+  const byStatus = {
+    "in-progress": tracked.filter(t => statuses[t.id] === "in-progress"),
+    "blocked":     tracked.filter(t => statuses[t.id] === "blocked"),
+    "complete":    tracked.filter(t => statuses[t.id] === "complete"),
+  };
 
   return (
     <>
-      <h1 className="h-display">Who are you?</h1>
+      <h1 className="h-display">Saved</h1>
       <p className="lead">
-        Pick your name to personalize the site — we'll show your subcommittee tasks first.
-        Nothing leaves this device.
+        Tasks you've moved out of "Open" — kept on this device. Reset from the Tweaks panel if needed.
       </p>
-      <div className="roster-grid">
-        {everyone.map(p => (
-          <button key={p.email} className="roster-pick" onClick={() => { setMe(p.name); navigate("/me"); }}>
-            <div className="roster-pick__avatar">{initialsFor(p.name)}</div>
-            <div>
-              <div className="roster-pick__name">{p.name}</div>
-              <div className="roster-pick__sub">{p.subs.map(s => s.name).join(" · ")}</div>
-            </div>
-          </button>
-        ))}
-      </div>
+
+      {tracked.length === 0 ? (
+        <div className="empty">
+          You haven't tracked any tasks yet. Tap a status button (In progress / Done / Blocked) on any task to save it here.
+        </div>
+      ) : (
+        <>
+          <div className="row" style={{ marginBottom: 18, flexWrap: "wrap" }}>
+            <span className="chip chip--amber">{byStatus["in-progress"].length} in progress</span>
+            <span className="chip chip--teal">{byStatus["complete"].length} complete</span>
+            <span className="chip chip--crimson">{byStatus["blocked"].length} blocked</span>
+          </div>
+
+          {byStatus["in-progress"].length > 0 && (
+            <section className="section">
+              <h2 className="h-section">In progress ({byStatus["in-progress"].length})</h2>
+              <TaskBoard tasks={byStatus["in-progress"]} statuses={statuses} setStatus={setStatus} navigate={navigate} showElementLink={true} />
+            </section>
+          )}
+          {byStatus["blocked"].length > 0 && (
+            <section className="section">
+              <h2 className="h-section">Blocked ({byStatus["blocked"].length})</h2>
+              <TaskBoard tasks={byStatus["blocked"]} statuses={statuses} setStatus={setStatus} navigate={navigate} showElementLink={true} />
+            </section>
+          )}
+          {byStatus["complete"].length > 0 && (
+            <section className="section">
+              <h2 className="h-section">Complete ({byStatus["complete"].length})</h2>
+              <TaskBoard tasks={byStatus["complete"]} statuses={statuses} setStatus={setStatus} navigate={navigate} showElementLink={true} />
+            </section>
+          )}
+        </>
+      )}
     </>
   );
 };
 
 Object.assign(window, {
   HomeView, SubcommitteeView, ElementView, AllElementsView, AllTasksView,
-  MEPOView, ResourcesView, MeView,
+  MEPOView, ResourcesView, SavedView,
   ElementList, TaskBoard, MembersPanel,
   tasksForElement, tasksForSubcommittee, elementsForSubcommittee,
 });

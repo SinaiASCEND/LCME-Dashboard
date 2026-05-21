@@ -1,13 +1,22 @@
 # LCME Task Force Site
 
-Mobile-enabled hub for Mount Sinai's LCME Task Force subcommittees. Member rosters, assigned LCME elements with new-DCI text and changes from 2026-27, task tracking, MEPO reference, and links to the ASCEND Curriculum Navigator.
+Mobile-enabled hub for Mount Sinai's LCME Task Force subcommittees.
+
+**What's inside:**
+- Membership directory (all members + per-subcommittee filters)
+- Full 2027–28 DCI: 12 standards → elements → narrative questions, tables, supporting docs
+- Independent Student Analysis (ISA) survey items by domain
+- Element-level task tracking (status saved locally)
+- Cross-document search (DCI + ISA)
+- Sticky bottom nav: Search · DCI · Members · Saved
+- ASCEND palette: Cyan #00AEEF primary, Magenta #D80B8C accent, Barlow type
 
 ## Deploy
 
-This is a static site — no build step. Just upload everything to a static host (GitHub Pages, Netlify, S3, etc.).
+Static site, no build step. Push to any static host.
 
-For **GitHub Pages**:
-1. Push these files to a repo (any layout works).
+**GitHub Pages:**
+1. Push every file in this folder to a repo.
 2. Settings → Pages → deploy from branch root.
 3. Visit `https://<user>.github.io/<repo>/`.
 
@@ -15,35 +24,35 @@ For **GitHub Pages**:
 
 | File | Purpose |
 |---|---|
-| `index.html` | Entry point — loads React, Babel, and all scripts |
-| `styles.css` | All visual styling + 3 themes (Mount Sinai / Calm / Modern) |
-| `data.js` | Subcommittees, members, elements, tasks, MEPOs, resources |
+| `index.html` | Entry point — loads React, Babel, all scripts, Google Fonts |
+| `styles.css` | All styling — ASCEND palette + 2 alternate themes (Calm, Modern) |
+| `data.js` | Subcommittees, members, task list, MEPOs, resources |
+| `dci-data.js` | Parsed 2027–28 DCI: 12 standards, ~83 elements, narratives, tables, docs |
+| `isa-data.js` | ISA survey items by domain |
 | `ui.jsx` | Icons, chips, tabs, localStorage hooks |
-| `views.jsx` | Home / Subcommittee / Element / MEPO / Resources / Me views |
-| `app.jsx` | Root component, hash router, Tweaks panel wiring |
-| `tweaks-panel.jsx` | Tweaks panel framework (theme toggle, etc.) |
-| `assets/` | Org chart image + DCI comparison PDF |
+| `views.jsx` | Home / Subcommittee / Element / MEPO / Resources / Saved views |
+| `docs.jsx` | DCI / ISA / Membership views + document search |
+| `app.jsx` | Root, hash router, breadcrumbs, bottom bar, search overlay, Tweaks |
+| `tweaks-panel.jsx` | Tweaks panel framework (visual theme toggle) |
+| `assets/` | Governance org chart + DCI comparison PDF |
 
 ## Editing content
 
-Almost all content lives in **`data.js`**:
+Most content lives in `data.js`:
 
 - **Members** — `SUBCOMMITTEES[KEY].coChairs / projectManager / members`
-- **Tasks** — `RAW_TASKS` array, format `[id, subcommittee, element, category, description, dueDateSerial]`
-- **Element narratives** — `ELEMENTS` array: `changeLevel`, `changeSummary`, `whatChanged[]`, `whatToAddress[]`
+- **Tasks** — `RAW_TASKS` array: `[id, subcommittee, element, category, description, dueDateSerial]`
+- **Element change notes** — `ELEMENTS` array
 - **MEPOs** — `MEPOS` array
-- **Resources** — `RESOURCES` array
 
-After editing, no rebuild needed — just refresh.
+To update the DCI or ISA content, edit `dci-data.js` or `isa-data.js` directly (they're plain JSON inside a JS assignment).
 
-## Single-file bundle
-
-If you'd prefer one self-contained HTML file (works offline, no asset paths to manage), see `lcme-task-force.html` in the parent project — same site bundled into a single file.
+No rebuild needed — just refresh the browser.
 
 ## Browser support
 
-Modern evergreen browsers (Chrome/Edge/Safari/Firefox last 2 years). Uses ES2020+ features and hash-based routing.
+Modern evergreen browsers. Uses ES2020+, hash-based routing, CSS custom properties, `env(safe-area-inset-bottom)` for iOS notch.
 
 ## Privacy
 
-Task status and roster identity persist in `localStorage` on each user's device only. Nothing is sent to a server.
+Task status and theme preference persist in `localStorage` only. Nothing leaves the device.

@@ -16,7 +16,7 @@ window.LCME_DATA = (() => {
         { name: "Staci Leisman",   email: "staci.leisman@mssm.edu" },
         { name: "Teddy Holzer",    email: "horatio.holzer@mountsinai.org" },
       ],
-      projectManager: { name: "Fatima Shafiq", email: "fatima.shafiq@mssm.edu" },
+      projectManager: { name: "Kenia Tavares", email: "kenia.tavarez@mssm.edu" },
       members: [
         { name: "Andrea Lendaris",  email: "andrea.lendaris@mssm.edu" },
         { name: "David Portnoy",    email: "david.portnoy@mountsinai.org" },
@@ -42,7 +42,7 @@ window.LCME_DATA = (() => {
         { name: "Shashi Anand",    email: "shashi.anand@mssm.edu" },
         { name: "Kris Alpi",       email: "Kris.Alpi@mssm.edu" },
       ],
-      projectManager: { name: "Fatima Shafiq", email: "fatima.shafiq@mssm.edu" },
+      projectManager: { name: "Kenia Tavares", email: "kenia.tavarez@mssm.edu" },
       members: [
         { name: "Eric Kutscher",     email: "Eric.Kutscher@mountsinai.org" },
         { name: "Jared Kutzin",      email: "Jared.Kutzin@mountsinai.org" },
@@ -68,10 +68,9 @@ window.LCME_DATA = (() => {
         { name: "Ravishankar Ramaswamy", email: "ravishankar.ramaswamy@mssm.edu" },
         { name: "Chris Strother",        email: "christopher.strother@mountsinai.org" },
       ],
-      projectManager: { name: "Kenia Tavarez", email: "kenia.tavarez@mssm.edu" },
+      projectManager: { name: "Sadyn Angeles", email: "sadyn.angeles@mssm.edu" },
       members: [
         { name: "Adriana Malone",    email: "adriana.malone@mountsinai.org" },
-        { name: "Aveena Kochar",     email: "aveena.kochar@mountsinai.org", note: "Declined membership" },
         { name: "Bess Storch",       email: "Bess.Storch@mountsinai.org" },
         { name: "Brian Rice",        email: "Brian.Rice@mountsinai.org" },
         { name: "Deana Chieco",      email: "deanna.chieco@mssm.edu" },
