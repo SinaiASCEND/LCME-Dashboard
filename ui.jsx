@@ -32,6 +32,7 @@ const Icon = ({ name, size = 16, ...rest }) => {
     minus:     <line x1="5" y1="10" x2="15" y2="10" />,
     bookmark:  <path d="M5 3 H15 V17 L10 13 L5 17 Z" />,
     bookmarkF: <path d="M5 3 H15 V17 L10 13 L5 17 Z" fill="currentColor" stroke="none" />,
+    glossary:  <g><path d="M4 4 a1.2 1.2 0 0 1 1.2 -1.2 H16 V14.5 H5.2 a1.2 1.2 0 0 0 -1.2 1.2 Z" /><path d="M4 15.7 a1.2 1.2 0 0 1 1.2 -1.2 H16 V17 H5.2 a1.2 1.2 0 0 1 -1.2 -1.3 Z" /><line x1="7.5" y1="6.5" x2="13" y2="6.5" /><line x1="7.5" y1="9" x2="13" y2="9" /><line x1="7.5" y1="11.5" x2="11" y2="11.5" /></g>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 20 20"

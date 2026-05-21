@@ -129,6 +129,15 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">{memberCount} members across all 3 subcommittees, plus filters per group.</div>
             </div>
           </button>
+          <button className="home-pillow" onClick={() => navigate("/phases")}
+            style={{ "--accent": "var(--magenta-2)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--magenta-2)" }}><Icon name="list" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--magenta-2)" }}>AY 2025–26</div>
+              <div className="home-pillow__title">ASCEND Phases</div>
+              <div className="home-pillow__sub">Full roster across all three phases — modules, clerkships, and advanced clinical experiences.</div>
+            </div>
+          </button>
           <a className="home-pillow" href={RESOURCES[0].url} target="_blank" rel="noreferrer"
             style={{ "--accent": "var(--navy-2)" }}>
             <span className="home-pillow__icon" style={{ background: "var(--navy-2)" }}><Icon name="compass" size={22} /></span>
@@ -138,6 +147,69 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">Student-facing curriculum dashboard with phase, module, and EPO views.</div>
             </div>
           </a>
+        </div>
+      </section>
+
+      <section className="section">
+        <h2 className="h-section">Self-study reference</h2>
+        <p className="lead" style={{ marginBottom: 14 }}>
+          From the May 21, 2026 kickoff — what this self-study is, who runs it, when things happen, and what we're being measured against.
+        </p>
+        <div className="home-pillow-grid">
+          <button className="home-pillow" onClick={() => navigate("/about")}
+            style={{ "--accent": "var(--magenta)" }}>
+            <span className="home-pillow__icon"><Icon name="sparkle" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow">Overview</div>
+              <div className="home-pillow__title">About the self-study</div>
+              <div className="home-pillow__sub">Mission, the three lenses, key dates, and how the DCI &amp; ISA fit together.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/roadmap")}
+            style={{ "--accent": "var(--sky)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--sky)" }}><Icon name="target" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--sky)" }}>Timeline</div>
+              <div className="home-pillow__title">The road to LCME</div>
+              <div className="home-pillow__sub">Sep 2025 → Oct 2027 → AY 27–28, with every major milestone.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/leadership")}
+            style={{ "--accent": "var(--teal)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="users" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--teal)" }}>People</div>
+              <div className="home-pillow__title">Leadership &amp; roles</div>
+              <div className="home-pillow__sub">FAL, Steering Committee, and the 6 layers of responsibility.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/sc8")}
+            style={{ "--accent": "var(--magenta-2)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--magenta-2)" }}><Icon name="list" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--magenta-2)" }}>Structure</div>
+              <div className="home-pillow__title">All 8 subcommittees</div>
+              <div className="home-pillow__sub">The full self-study structure — broader than the 3 curriculum groups tracked here.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/site-visit")}
+            style={{ "--accent": "var(--magenta)" }}>
+            <span className="home-pillow__icon"><Icon name="flag" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow">Oct 18–20, 2027</div>
+              <div className="home-pillow__title">Site visit prep</div>
+              <div className="home-pillow__sub">2.5 days · 4–6 peer surveyors · what they look for and how to prepare.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/ascend")}
+            style={{ "--accent": "var(--navy-2)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--navy-2)" }}><Icon name="compass" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--navy-2)" }}>Curriculum</div>
+              <div className="home-pillow__title">The ASCEND curriculum</div>
+              <div className="home-pillow__sub">Phases, blocks, clerkships, AOCs, and EEC governance — context for any element touching teaching.</div>
+            </div>
+          </button>
         </div>
       </section>
 

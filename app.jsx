@@ -1,7 +1,8 @@
-/* global React, ReactDOM, LCME_DATA, LCME_DCI, LCME_ISA,
+/* global React, ReactDOM, LCME_DATA, LCME_DCI, LCME_ISA, LCME_GLOSSARY,
    HomeView, SubcommitteeView, ElementView, AllElementsView, AllTasksView,
-   MEPOView, ResourcesView, MembershipView, SavedView,
+   MEPOView, ResourcesView, MembershipView, GlossaryView, RosterView, AllPhasesView,
    DCIIndexView, DCIStandardView, DCIElementView, ISAIndexView, ISADomainView,
+   AboutView, RoadmapView, LeadershipView, AllSubcommitteesView, SiteVisitView, AscendView,
    Breadcrumbs, Icon, useTaskStatuses, DocSearchBar,
    TweaksPanel, useTweaks, TweakSection, TweakRadio, TweakButton */
 // LCME Task Force — App root with hash router + breadcrumbs + tweaks.
@@ -69,7 +70,12 @@ function trailFor(view, navigate) {
     case "mepos":             return [base, { label: "MEPOs" }];
     case "resources":         return [base, { label: "Resources" }];
     case "members":           return [base, { label: "Membership" }];
-    case "saved":             return [base, { label: "Saved" }];
+    case "glossary":          return [base, { label: "Glossary" }];
+    case "phases":            return [base, { label: "ASCEND Phases" }];
+    case "roster": {
+      const labels = { phase1: "Phase 1 modules", phase2: "Phase 2 clerkships", phase3: "Phase 3 experiences" };
+      return [base, { label: labels[view.id] || "Roster" }];
+    }
     case "dci":               return [base, { label: "DCI 2027–28" }];
     case "dci-standard":      return [base, { label: "DCI 2027–28", path: "/dci" }, { label: "Standard " + view.id }];
     case "dci-element": {
@@ -85,6 +91,12 @@ function trailFor(view, navigate) {
       const d = (window.LCME_ISA || [])[Number(view.idx)];
       return [base, { label: "ISA", path: "/isa" }, { label: d ? "Domain " + (Number(view.idx)+1) : "Domain" }];
     }
+    case "about":             return [base, { label: "About the self-study" }];
+    case "roadmap":           return [base, { label: "Roadmap" }];
+    case "leadership":        return [base, { label: "Leadership & roles" }];
+    case "sc8":               return [base, { label: "All 8 subcommittees" }];
+    case "site-visit":        return [base, { label: "Site visit" }];
+    case "ascend":            return [base, { label: "ASCEND curriculum" }];
     default:                  return [{ label: "Home" }];
   }
 }
@@ -122,8 +134,7 @@ const SearchOverlay = ({ open, onClose, navigate }) => {
 };
 
 // ─── Bottom bar ───────────────────────────────────────────────────────
-const BottomBar = ({ route, navigate, onSearch, statuses }) => {
-  const saved = Object.keys(statuses).length;
+const BottomBar = ({ route, navigate, onSearch }) => {
   const active = (path) => route.startsWith(path);
   return (
     <nav className="bottom-bar" aria-label="Primary">
@@ -141,10 +152,10 @@ const BottomBar = ({ route, navigate, onSearch, statuses }) => {
         <Icon name="users" size={20} />
         <span>Members</span>
       </button>
-      <button className={"bottom-bar__btn " + (active("/saved") ? "is-active" : "")}
-        onClick={() => navigate("/saved")}>
-        <Icon name={saved > 0 ? "bookmarkF" : "bookmark"} size={20} />
-        <span>Saved{saved > 0 ? ` (${saved})` : ""}</span>
+      <button className={"bottom-bar__btn " + (active("/glossary") ? "is-active" : "")}
+        onClick={() => navigate("/glossary")}>
+        <Icon name="glossary" size={20} />
+        <span>Glossary</span>
       </button>
     </nav>
   );
@@ -174,12 +185,20 @@ const App = () => {
     if (parts[0] === "mepos")            return { type: "mepos" };
     if (parts[0] === "resources")        return { type: "resources" };
     if (parts[0] === "members")          return { type: "members" };
-    if (parts[0] === "saved")            return { type: "saved" };
+    if (parts[0] === "glossary")         return { type: "glossary" };
+    if (parts[0] === "phases")           return { type: "phases" };
+    if (parts[0] === "roster" && parts[1]) return { type: "roster", id: parts[1] };
     if (parts[0] === "dci" && parts[1] === "s" && parts[2]) return { type: "dci-standard", id: parts[2] };
     if (parts[0] === "dci" && parts[1] === "e" && parts[2]) return { type: "dci-element", id: parts[2] };
     if (parts[0] === "dci")              return { type: "dci" };
     if (parts[0] === "isa" && parts[1])  return { type: "isa-domain", idx: parts[1] };
     if (parts[0] === "isa")              return { type: "isa" };
+    if (parts[0] === "about")            return { type: "about" };
+    if (parts[0] === "roadmap")          return { type: "roadmap" };
+    if (parts[0] === "leadership")       return { type: "leadership" };
+    if (parts[0] === "sc8")              return { type: "sc8" };
+    if (parts[0] === "site-visit")       return { type: "site-visit" };
+    if (parts[0] === "ascend")           return { type: "ascend" };
     return { type: "home" };
   }, [route]);
 
@@ -201,12 +220,20 @@ const App = () => {
         {view.type === "mepos"              && <MEPOView />}
         {view.type === "resources"          && <ResourcesView navigate={navigate} />}
         {view.type === "members"            && <MembershipView navigate={navigate} />}
-        {view.type === "saved"              && <SavedView navigate={navigate} statuses={statuses} setStatus={setStatus} />}
+        {view.type === "glossary"           && <GlossaryView navigate={navigate} />}
+        {view.type === "phases"             && <AllPhasesView navigate={navigate} />}
+        {view.type === "roster"             && <RosterView phaseId={view.id} navigate={navigate} />}
         {view.type === "dci"                && <DCIIndexView navigate={navigate} />}
         {view.type === "dci-standard"       && <DCIStandardView standardId={view.id} navigate={navigate} />}
         {view.type === "dci-element"        && <DCIElementView elementId={view.id} navigate={navigate} />}
         {view.type === "isa"                && <ISAIndexView navigate={navigate} />}
         {view.type === "isa-domain"         && <ISADomainView domainIdx={view.idx} navigate={navigate} />}
+        {view.type === "about"              && <AboutView navigate={navigate} />}
+        {view.type === "roadmap"            && <RoadmapView navigate={navigate} />}
+        {view.type === "leadership"         && <LeadershipView navigate={navigate} />}
+        {view.type === "sc8"                && <AllSubcommitteesView navigate={navigate} />}
+        {view.type === "site-visit"         && <SiteVisitView navigate={navigate} />}
+        {view.type === "ascend"             && <AscendView navigate={navigate} />}
       </main>
 
       <footer className="app-footer">
@@ -247,7 +274,7 @@ const App = () => {
         }} />
       </TweaksPanel>
 
-      <BottomBar route={route} navigate={navigate} onSearch={() => setSearchOpen(true)} statuses={statuses} />
+      <BottomBar route={route} navigate={navigate} onSearch={() => setSearchOpen(true)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} navigate={navigate} />
     </>
   );
