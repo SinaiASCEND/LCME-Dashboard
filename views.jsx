@@ -60,48 +60,62 @@ const HomeView = ({ navigate, statuses }) => {
     return s + ids.size;
   }, 0);
 
+  const subAccentVar = {
+    magenta: "var(--magenta)",
+    navy:    "var(--navy-2)",
+    teal:    "var(--teal)",
+  };
+
   return (
     <>
-      <section className="hero">
-        <div className="hero__eyebrow">LCME 2027–28 DCI Cycle · Mount Sinai</div>
-        <h1 className="hero__title">The Curriculum Task Force, in one place.</h1>
-        <p className="hero__body">
-          Membership, the full 2027–28 DCI by standard and element, the required ISA survey items,
-          and every task that has to be done before the June 2027 deadline — searchable from your phone.
-        </p>
-        <div className="hero__stats">
-          <div className="hero__stat">
-            <span className="hero__stat-value">3</span>
-            <span className="hero__stat-label">Subcommittees</span>
+      <section className="hero hero--compact">
+        <div className="hero__compact-row">
+          <div className="hero__compact-text">
+            <div className="hero__eyebrow">LCME 2027–28 DCI Cycle · Mount Sinai</div>
+            <h1 className="hero__title">LCME Task Force Information</h1>
+            <div className="hero__byline">At your fingertips.</div>
           </div>
-          <div className="hero__stat">
-            <span className="hero__stat-value">{totalDCI || totalElements}</span>
-            <span className="hero__stat-label">DCI Elements</span>
-          </div>
-          <div className="hero__stat">
-            <span className="hero__stat-value">{totalTasks}</span>
-            <span className="hero__stat-label">Tasks tracked</span>
-          </div>
-          <div className="hero__stat">
-            <span className="hero__stat-value">{totalISA}</span>
-            <span className="hero__stat-label">ISA survey items</span>
-          </div>
+          <img className="hero__logo" src="assets/ascend-logo.png"
+            alt="ASCEND Curriculum" />
         </div>
       </section>
 
       <section className="section">
         <h2 className="h-section">Subcommittees</h2>
-        <div className="grid grid--3">
-          {Object.values(SUBCOMMITTEES).map(sub => (
-            <SubcommitteeCard key={sub.key} sub={sub} statuses={statuses}
-              onOpen={() => navigate("/s/" + sub.key)} />
-          ))}
+        <div className="subcomm-vert-grid">
+          {Object.values(SUBCOMMITTEES).map(sub => {
+            const els = elementsForSubcommittee(sub.key);
+            const tasks = tasksForSubcommittee(sub.key);
+            const memberCount = sub.coChairs.length + sub.members.length + 1;
+            const accent = subAccentVar[sub.accent] || "var(--magenta)";
+            return (
+              <button key={sub.key} className="subcomm-vert" onClick={() => navigate("/s/" + sub.key)}
+                style={{ "--accent": accent }}>
+                <span className="subcomm-vert__bar" />
+                <div className="subcomm-vert__row subcomm-vert__row--top">
+                  <span className="subcomm-vert__icon">
+                    <Icon name="users" size={26} />
+                  </span>
+                  <div className="subcomm-vert__heading">
+                    <div className="subcomm-vert__eyebrow">Subcommittee</div>
+                    <div className="subcomm-vert__title">{sub.name}</div>
+                  </div>
+                </div>
+                <div className="subcomm-vert__row subcomm-vert__row--meta">
+                  <span className="chip"><span className="dot" />{els.length} elements</span>
+                  <span className="chip">{tasks.length} tasks</span>
+                  <span className="chip">{memberCount} members</span>
+                  <span className="subcomm-vert__open">Open <Icon name="arrowR" size={12} /></span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
       <section className="section">
         <h2 className="h-section">Browse</h2>
-        <div className="home-pillow-grid">
+        <div className="home-pillow-grid home-pillow-grid--4">
           <button className="home-pillow" onClick={() => navigate("/dci")}
             style={{ "--accent": "var(--magenta)" }}>
             <span className="home-pillow__icon"><Icon name="book" size={22} /></span>
@@ -118,15 +132,6 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__eyebrow" style={{ color: "var(--sky)" }}>Student Survey</div>
               <div className="home-pillow__title">Independent Student Analysis</div>
               <div className="home-pillow__sub">{totalISA} required survey items across {(window.LCME_ISA || []).length} domains.</div>
-            </div>
-          </button>
-          <button className="home-pillow" onClick={() => navigate("/members")}
-            style={{ "--accent": "var(--teal)" }}>
-            <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="users" size={22} /></span>
-            <div className="home-pillow__body">
-              <div className="home-pillow__eyebrow" style={{ color: "var(--teal)" }}>Roster</div>
-              <div className="home-pillow__title">Membership</div>
-              <div className="home-pillow__sub">{memberCount} members across all 3 subcommittees, plus filters per group.</div>
             </div>
           </button>
           <button className="home-pillow" onClick={() => navigate("/phases")}
@@ -147,6 +152,42 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">Student-facing curriculum dashboard with phase, module, and EPO views.</div>
             </div>
           </a>
+          <button className="home-pillow" onClick={() => navigate("/mepos")}
+            style={{ "--accent": "var(--magenta)" }}>
+            <span className="home-pillow__icon"><Icon name="target" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow">23 Objectives</div>
+              <div className="home-pillow__title">MEPOs</div>
+              <div className="home-pillow__sub">All Sinai program objectives grouped by competency domain.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/tasks")}
+            style={{ "--accent": "var(--sky)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--sky)" }}><Icon name="list" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--sky)" }}>Tracker</div>
+              <div className="home-pillow__title">All tasks ({totalTasks})</div>
+              <div className="home-pillow__sub">{doneTasks > 0 ? `${doneTasks} marked complete on this device` : "Search, filter, and track status."}</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/elements")}
+            style={{ "--accent": "var(--teal)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="list" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--teal)" }}>Directory</div>
+              <div className="home-pillow__title">All LCME elements</div>
+              <div className="home-pillow__sub">{totalElements} elements assigned across the three subcommittees.</div>
+            </div>
+          </button>
+          <button className="home-pillow" onClick={() => navigate("/resources")}
+            style={{ "--accent": "var(--magenta-2)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--magenta-2)" }}><Icon name="tree" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--magenta-2)" }}>Reference</div>
+              <div className="home-pillow__title">Governance Org Chart</div>
+              <div className="home-pillow__sub">Reporting structure for the Dean and standing committees.</div>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -155,8 +196,8 @@ const HomeView = ({ navigate, statuses }) => {
         <p className="lead" style={{ marginBottom: 14 }}>
           From the May 21, 2026 kickoff — what this self-study is, who runs it, when things happen, and what we're being measured against.
         </p>
-        <div className="home-pillow-grid">
-          <button className="home-pillow" onClick={() => navigate("/about")}
+        <div className="home-pillow-grid home-pillow-grid--4 home-pillow-grid--titles">
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/about")}
             style={{ "--accent": "var(--magenta)" }}>
             <span className="home-pillow__icon"><Icon name="sparkle" size={22} /></span>
             <div className="home-pillow__body">
@@ -165,7 +206,7 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">Mission, the three lenses, key dates, and how the DCI &amp; ISA fit together.</div>
             </div>
           </button>
-          <button className="home-pillow" onClick={() => navigate("/roadmap")}
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/roadmap")}
             style={{ "--accent": "var(--sky)" }}>
             <span className="home-pillow__icon" style={{ background: "var(--sky)" }}><Icon name="target" size={22} /></span>
             <div className="home-pillow__body">
@@ -174,7 +215,7 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">Sep 2025 → Oct 2027 → AY 27–28, with every major milestone.</div>
             </div>
           </button>
-          <button className="home-pillow" onClick={() => navigate("/leadership")}
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/leadership")}
             style={{ "--accent": "var(--teal)" }}>
             <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="users" size={22} /></span>
             <div className="home-pillow__body">
@@ -183,7 +224,7 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">FAL, Steering Committee, and the 6 layers of responsibility.</div>
             </div>
           </button>
-          <button className="home-pillow" onClick={() => navigate("/sc8")}
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/sc8")}
             style={{ "--accent": "var(--magenta-2)" }}>
             <span className="home-pillow__icon" style={{ background: "var(--magenta-2)" }}><Icon name="list" size={22} /></span>
             <div className="home-pillow__body">
@@ -192,7 +233,7 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">The full self-study structure — broader than the 3 curriculum groups tracked here.</div>
             </div>
           </button>
-          <button className="home-pillow" onClick={() => navigate("/site-visit")}
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/site-visit")}
             style={{ "--accent": "var(--magenta)" }}>
             <span className="home-pillow__icon"><Icon name="flag" size={22} /></span>
             <div className="home-pillow__body">
@@ -201,7 +242,7 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">2.5 days · 4–6 peer surveyors · what they look for and how to prepare.</div>
             </div>
           </button>
-          <button className="home-pillow" onClick={() => navigate("/ascend")}
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/ascend")}
             style={{ "--accent": "var(--navy-2)" }}>
             <span className="home-pillow__icon" style={{ background: "var(--navy-2)" }}><Icon name="compass" size={22} /></span>
             <div className="home-pillow__body">
@@ -210,31 +251,22 @@ const HomeView = ({ navigate, statuses }) => {
               <div className="home-pillow__sub">Phases, blocks, clerkships, AOCs, and EEC governance — context for any element touching teaching.</div>
             </div>
           </button>
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="h-section">More</h2>
-        <div className="resource-strip">
-          <button className="resource-tile" onClick={() => navigate("/resources")}>
-            <span className="resource-tile__icon"><Icon name="tree" size={20} /></span>
-            <div>
-              <div className="resource-tile__title">Governance Org Chart</div>
-              <div className="resource-tile__desc">Reporting structure for the Dean and committees.</div>
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/members")}
+            style={{ "--accent": "var(--teal)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--teal)" }}><Icon name="users" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--teal)" }}>Roster</div>
+              <div className="home-pillow__title">Membership directory</div>
+              <div className="home-pillow__sub">{memberCount} members across all 3 subcommittees, plus filters per group.</div>
             </div>
           </button>
-          <button className="resource-tile" onClick={() => navigate("/mepos")}>
-            <span className="resource-tile__icon"><Icon name="target" size={20} /></span>
-            <div>
-              <div className="resource-tile__title">MEPOs (23 program objectives)</div>
-              <div className="resource-tile__desc">All Sinai MEPOs grouped by competency domain.</div>
-            </div>
-          </button>
-          <button className="resource-tile" onClick={() => navigate("/tasks")}>
-            <span className="resource-tile__icon"><Icon name="list" size={20} /></span>
-            <div>
-              <div className="resource-tile__title">All tasks ({totalTasks})</div>
-              <div className="resource-tile__desc">{doneTasks > 0 ? `${doneTasks} marked complete on this device` : "Search, filter, and track status"}.</div>
+          <button className="home-pillow home-pillow--title" onClick={() => navigate("/glossary")}
+            style={{ "--accent": "var(--sky)" }}>
+            <span className="home-pillow__icon" style={{ background: "var(--sky)" }}><Icon name="glossary" size={22} /></span>
+            <div className="home-pillow__body">
+              <div className="home-pillow__eyebrow" style={{ color: "var(--sky)" }}>Reference</div>
+              <div className="home-pillow__title">Glossary of terms</div>
+              <div className="home-pillow__sub">LCME, ASCEND, and Sinai-specific terminology used across the self-study.</div>
             </div>
           </button>
         </div>

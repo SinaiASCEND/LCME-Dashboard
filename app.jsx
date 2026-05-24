@@ -33,23 +33,37 @@ function useHashRoute() {
 }
 
 // ─── Header ───────────────────────────────────────────────────────────
-const Header = ({ navigate }) => (
-  <header className="app-header">
-    <div className="app-header__bar">
-      <a className="app-header__brand" href="#/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
-        <div className="app-header__crest">LC</div>
-        <div>
-          <div className="app-header__title">LCME Task Force</div>
-          <div className="app-header__sub">Mount Sinai · 2027–28 DCI Cycle</div>
-        </div>
-      </a>
-      <span className="app-header__spacer" />
-      <button className="app-header__back" onClick={() => navigate("/")}>
-        <Icon name="home" size={13} /> Home
-      </button>
-    </div>
-  </header>
-);
+const Header = ({ navigate }) => {
+  const ref = React.useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const measure = () => {
+      const h = ref.current?.getBoundingClientRect().height || 60;
+      document.documentElement.style.setProperty("--header-h", h + "px");
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <header className="app-header" ref={ref}>
+      <div className="app-header__bar">
+        <a className="app-header__brand" href="#/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
+          <div className="app-header__crest">LC</div>
+          <div>
+            <div className="app-header__title">LCME Task Force</div>
+            <div className="app-header__sub">Mount Sinai · 2027–28 DCI Cycle</div>
+          </div>
+        </a>
+        <span className="app-header__spacer" />
+        <button className="app-header__back" onClick={() => navigate("/")}>
+          <Icon name="home" size={13} /> Home
+        </button>
+      </div>
+    </header>
+  );
+};
 
 // ─── Build breadcrumb trail from current view ─────────────────────────
 function trailFor(view, navigate) {
@@ -97,51 +111,286 @@ function trailFor(view, navigate) {
     case "sc8":               return [base, { label: "All 8 subcommittees" }];
     case "site-visit":        return [base, { label: "Site visit" }];
     case "ascend":            return [base, { label: "ASCEND curriculum" }];
+    case "search":            return [base, { label: "Search" }];
     default:                  return [{ label: "Home" }];
   }
 }
 
-// ─── Search overlay ───────────────────────────────────────────────────
-const SearchOverlay = ({ open, onClose, navigate }) => {
+// ─── Scroll sway — gentle horizontal drift as the page scrolls ───────
+function useScrollSway() {
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
+    let raf = 0;
+    const apply = () => {
+      raf = 0;
+      const y = window.scrollY || 0;
+      const main = Math.sin(y / 220) * 6;  // ±6px
+      const bar  = Math.cos(y / 260) * 8;  // ±8px
+      document.documentElement.style.setProperty("--sway-main", main.toFixed(2) + "px");
+      document.documentElement.style.setProperty("--sway-bar",  bar.toFixed(2) + "px");
     };
-  }, [open, onClose]);
-  if (!open) return null;
-  const go = (path) => { onClose(); navigate(path); };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(apply); };
+    apply();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+}
+
+// ─── Search results view (full page) ──────────────────────────────────
+const SearchView = ({ navigate, initialQuery }) => {
+  const [q, setQ] = useState(initialQuery || "");
+  const [results, setResults] = useState([]);
+  const [expanded, setExpanded] = useState(null); // result object
+  const inputRef = React.useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  // Persist q in hash so back/forward & deep links work: #/search?q=foo
+  useEffect(() => {
+    const cur = window.location.hash.replace(/^#/, "");
+    const target = "/search" + (q ? "?q=" + encodeURIComponent(q) : "");
+    if (cur !== target) {
+      window.history.replaceState(null, "", "#" + target);
+    }
+  }, [q]);
+
+  // Build results
+  useEffect(() => {
+    const term = q.trim().toLowerCase();
+    if (term.length < 2) { setResults([]); setExpanded(null); return; }
+    const out = [];
+    const D = window.LCME_DATA || {};
+
+    // DCI
+    for (const std of (window.LCME_DCI || [])) {
+      if (std.title.toLowerCase().includes(term)) {
+        out.push({ kind: "standard", label: `Standard ${std.id}: ${std.title}`, path: "/dci/s/" + std.id, body: std.intent || std.title });
+      }
+      for (const el of std.elements) {
+        if (el.id.includes(term) || el.title.toLowerCase().includes(term)) {
+          out.push({ kind: "element", label: `${el.id} ${el.title}`, sub: "Standard " + std.id, path: "/dci/e/" + el.id, body: el.title });
+        }
+        for (const n of el.narratives) {
+          if (n.text.toLowerCase().includes(term)) {
+            out.push({ kind: "narrative", label: `${el.id} · narrative (${n.letter})`, sub: snippet(n.text, term), path: "/dci/e/" + el.id, body: n.text });
+          }
+        }
+        for (const t of el.tables) {
+          if ((t.title || "").toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term)) {
+            out.push({ kind: "table", label: `${el.id} · ${t.title || "table"}`, sub: snippet(t.description || "", term), path: "/dci/e/" + el.id, body: t.description || t.title });
+          }
+        }
+        for (const d of el.supportingDocs) {
+          if (d.text.toLowerCase().includes(term)) {
+            out.push({ kind: "doc", label: `${el.id} · supporting doc ${d.n}`, sub: snippet(d.text, term), path: "/dci/e/" + el.id, body: d.text });
+          }
+        }
+      }
+    }
+    // ISA
+    (window.LCME_ISA || []).forEach((d, di) => {
+      if (d.name.toLowerCase().includes(term)) {
+        out.push({ kind: "isa-domain", label: `ISA: ${d.name}`, path: "/isa/" + di, body: d.name });
+      }
+      const allItems = [...d.items, ...d.subdomains.flatMap(sd => sd.items.map(it => ({ ...it, _sd: sd.name })))];
+      for (const it of allItems) {
+        if (it.text.toLowerCase().includes(term)) {
+          out.push({ kind: "isa-item", label: `ISA · ${d.name}${it._sd ? " · " + it._sd : ""}`, sub: snippet(it.text, term), path: "/isa/" + di, body: it.text });
+        }
+      }
+    });
+    // Subcommittees + members
+    for (const sub of Object.values(D.SUBCOMMITTEES || {})) {
+      if (sub.name.toLowerCase().includes(term) || (sub.blurb || "").toLowerCase().includes(term)) {
+        out.push({ kind: "subcommittee", label: sub.name, sub: snippet(sub.blurb || "", term), path: "/s/" + sub.key, body: sub.blurb });
+      }
+      const people = [
+        ...sub.coChairs.map(m => ({ ...m, role: "Co-chair" })),
+        { ...sub.projectManager, role: "PM" },
+        ...sub.members.map(m => ({ ...m, role: "Member" })),
+      ];
+      for (const m of people) {
+        if ((m.name || "").toLowerCase().includes(term) || (m.email || "").toLowerCase().includes(term)) {
+          out.push({ kind: "member", label: m.name, sub: `${m.role} · ${sub.short} · ${m.email}`, path: "/s/" + sub.key, body: `${m.role} — ${sub.name}. ${m.note || ""}\n${m.email}` });
+        }
+      }
+    }
+    // Task-force elements
+    for (const el of (D.ELEMENTS || [])) {
+      if (el.id.includes(term) || (el.title || "").toLowerCase().includes(term) || (el.changeSummary || "").toLowerCase().includes(term)) {
+        out.push({ kind: "element", label: `${el.id} ${el.title}`, sub: snippet(el.changeSummary || "", term), path: "/e/" + el.id, body: el.changeSummary });
+      }
+    }
+    // Tasks
+    for (const t of (D.TASKS || [])) {
+      if (t.id.toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term)) {
+        out.push({ kind: "task", label: `${t.id} · ${t.category}`, sub: snippet(t.description || "", term), path: "/e/" + t.element, body: t.description });
+      }
+    }
+    // MEPOs
+    for (const g of (D.MEPOS || [])) {
+      if ((g.domain || "").toLowerCase().includes(term)) {
+        out.push({ kind: "mepo", label: `MEPO domain: ${g.domain}`, path: "/mepos", body: g.domain });
+      }
+      for (const item of g.items || []) {
+        if (item.toLowerCase().includes(term)) {
+          out.push({ kind: "mepo", label: `MEPO · ${g.domain}`, sub: snippet(item, term), path: "/mepos", body: item });
+        }
+      }
+    }
+    // Glossary
+    const glossary = window.LCME_GLOSSARY;
+    const glossaryEntries = glossary && glossary.entries ? glossary.entries : (Array.isArray(glossary) ? glossary : []);
+    for (const entry of glossaryEntries) {
+      const t = (entry.term || "").toLowerCase();
+      const def = (entry.body || entry.def || entry.definition || "").toLowerCase();
+      if (t.includes(term) || def.includes(term)) {
+        out.push({ kind: "glossary", label: entry.term + (entry.expansion ? " — " + entry.expansion : ""), sub: snippet(entry.body || entry.def || entry.definition || "", term), path: "/glossary", body: entry.body || entry.def || entry.definition });
+      }
+    }
+
+    // Dedupe
+    const seen = new Set();
+    const dedup = [];
+    for (const r of out) {
+      const k = r.kind + "|" + r.label + "|" + r.path;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      dedup.push(r);
+    }
+    setResults(dedup.slice(0, 120));
+    setExpanded(null);
+  }, [q]);
+
+  // Group by kind
+  const grouped = useMemo(() => {
+    const map = new Map();
+    for (const r of results) {
+      if (!map.has(r.kind)) map.set(r.kind, []);
+      map.get(r.kind).push(r);
+    }
+    const order = ["standard", "element", "narrative", "table", "doc",
+                   "isa-domain", "isa-item", "subcommittee", "member",
+                   "task", "mepo", "glossary"];
+    return order.filter(k => map.has(k)).map(k => ({ kind: k, items: map.get(k) }));
+  }, [results]);
+
   return (
-    <div className="search-overlay" onClick={onClose}>
-      <div className="search-overlay__panel" onClick={(e) => e.stopPropagation()}>
-        <div className="search-overlay__head">
-          <h3 className="search-overlay__title">Search the DCI &amp; ISA</h3>
-          <button className="search-overlay__close" onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
+    <>
+      <h1 className="h-display" style={{ marginBottom: 6 }}>Search</h1>
+      <p className="lead" style={{ marginBottom: 14 }}>
+        Search the entire database — DCI standards &amp; elements, ISA survey items, subcommittees, members, tasks, MEPOs, and the glossary.
+      </p>
+      <div className="searchpage-input">
+        <Icon name="search" size={16} />
+        <input
+          ref={inputRef}
+          placeholder="Search…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        {q ? (
+          <button onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear">
+            <Icon name="x" size={14} />
           </button>
-        </div>
-        <DocSearchBar placeholder="Search standards, elements, narratives, tables, ISA items…" navigate={go} />
-        <div className="search-overlay__hint">
-          Tip: try a topic ("self-directed"), an element ID ("7.6"), or a table name.
-        </div>
+        ) : null}
       </div>
-    </div>
+
+      {q.trim().length < 2 ? (
+        <div className="empty" style={{ marginTop: 18 }}>
+          Type at least 2 characters to search. Try an element ID ("7.6"), a person's name, or a topic ("self-directed").
+        </div>
+      ) : results.length === 0 ? (
+        <div className="empty" style={{ marginTop: 18 }}>No matches.</div>
+      ) : (
+        <>
+          <div className="searchpage-count">
+            <strong>{results.length}</strong> result{results.length === 1 ? "" : "s"} across {grouped.length} categor{grouped.length === 1 ? "y" : "ies"}.
+          </div>
+
+          {grouped.map(g => (
+            <section key={g.kind} className="searchpage-group">
+              <h3 className="searchpage-group__title">
+                {kindHeading(g.kind)} <span className="searchpage-group__count">{g.items.length}</span>
+              </h3>
+              <div className="searchpage-results">
+                {g.items.map((r, i) => {
+                  const isOpen = expanded && expanded._key === g.kind + ":" + i;
+                  return (
+                    <React.Fragment key={i}>
+                      <button className={"searchpage-hit" + (isOpen ? " is-open" : "")}
+                        onClick={() => {
+                          const key = g.kind + ":" + i;
+                          setExpanded(isOpen ? null : { ...r, _key: key });
+                        }}>
+                        <span className={"doc-search__kind doc-search__kind--" + r.kind.replace(/[^a-z]/g, "")}>{kindLabelShort(r.kind)}</span>
+                        <div className="searchpage-hit__body">
+                          <div className="searchpage-hit__label">{r.label}</div>
+                          {r.sub ? <div className="searchpage-hit__sub">{r.sub}</div> : null}
+                        </div>
+                        <Icon name="chevronDown" size={14} />
+                      </button>
+                      {isOpen ? (
+                        <div className="searchpage-expand">
+                          <div className="searchpage-expand__kind">{kindHeading(r.kind)}</div>
+                          <h4 className="searchpage-expand__title">{r.label}</h4>
+                          {r.body ? <p className="searchpage-expand__body">{r.body}</p> : null}
+                          <div className="searchpage-expand__actions">
+                            <button className="btn-primary" onClick={() => navigate(r.path)}>
+                              Open <Icon name="arrowR" size={12} />
+                            </button>
+                            <button className="btn-ghost" onClick={() => setExpanded(null)}>
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </>
+      )}
+    </>
   );
 };
 
+function snippet(text, term) {
+  if (!text) return "";
+  const t = String(text);
+  const lower = t.toLowerCase();
+  const idx = lower.indexOf(term);
+  if (idx < 0) return t.slice(0, 120);
+  const start = Math.max(0, idx - 36);
+  const end = Math.min(t.length, idx + term.length + 90);
+  return (start > 0 ? "…" : "") + t.slice(start, end) + (end < t.length ? "…" : "");
+}
+function kindLabelShort(kind) {
+  return {
+    standard: "Std", element: "Elem", narrative: "Q", table: "Table", doc: "Doc",
+    "isa-domain": "ISA", "isa-item": "ISA",
+    subcommittee: "Sub", member: "Person", task: "Task", mepo: "MEPO", glossary: "Term",
+  }[kind] || kind;
+}
+function kindHeading(kind) {
+  return {
+    standard: "DCI standards", element: "Elements", narrative: "DCI narrative questions",
+    table: "DCI tables", doc: "Supporting documents",
+    "isa-domain": "ISA domains", "isa-item": "ISA survey items",
+    subcommittee: "Subcommittees", member: "People", task: "Tasks", mepo: "MEPOs",
+    glossary: "Glossary terms",
+  }[kind] || kind;
+}
+
 // ─── Bottom bar ───────────────────────────────────────────────────────
-const BottomBar = ({ route, navigate, onSearch }) => {
+const BottomBar = ({ route, navigate }) => {
   const active = (path) => route.startsWith(path);
   return (
     <nav className="bottom-bar" aria-label="Primary">
-      <button className="bottom-bar__btn" onClick={onSearch}>
-        <Icon name="search" size={20} />
-        <span>Search</span>
-      </button>
       <button className={"bottom-bar__btn " + (active("/dci") ? "is-active" : "")}
         onClick={() => navigate("/dci")}>
         <Icon name="book" size={20} />
@@ -157,6 +406,11 @@ const BottomBar = ({ route, navigate, onSearch }) => {
         <Icon name="glossary" size={20} />
         <span>Glossary</span>
       </button>
+      <button className={"bottom-bar__btn " + (active("/search") ? "is-active" : "")}
+        onClick={() => navigate("/search")}>
+        <Icon name="search" size={20} />
+        <span>Search</span>
+      </button>
     </nav>
   );
 };
@@ -167,7 +421,7 @@ const App = () => {
   const [statuses, setStatus] = useTaskStatuses();
   const [tweaks, setTweak] = useTweaks(TWEAKS_DEFAULTS);
   const [tab, setTab] = useState("elements");
-  const [searchOpen, setSearchOpen] = useState(false);
+  useScrollSway();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", tweaks.theme || "sinai");
@@ -175,31 +429,39 @@ const App = () => {
 
   useEffect(() => { setTab("elements"); }, [route]);
 
-  const view = useMemo(() => {
-    const parts = route.split("/").filter(Boolean);
-    if (parts.length === 0)              return { type: "home" };
-    if (parts[0] === "s"  && parts[1])   return { type: "subcommittee", key: parts[1] };
-    if (parts[0] === "e"  && parts[1])   return { type: "element", id: parts[1] };
-    if (parts[0] === "elements")         return { type: "all-elements" };
-    if (parts[0] === "tasks")            return { type: "all-tasks" };
-    if (parts[0] === "mepos")            return { type: "mepos" };
-    if (parts[0] === "resources")        return { type: "resources" };
-    if (parts[0] === "members")          return { type: "members" };
-    if (parts[0] === "glossary")         return { type: "glossary" };
-    if (parts[0] === "phases")           return { type: "phases" };
-    if (parts[0] === "roster" && parts[1]) return { type: "roster", id: parts[1] };
-    if (parts[0] === "dci" && parts[1] === "s" && parts[2]) return { type: "dci-standard", id: parts[2] };
-    if (parts[0] === "dci" && parts[1] === "e" && parts[2]) return { type: "dci-element", id: parts[2] };
-    if (parts[0] === "dci")              return { type: "dci" };
-    if (parts[0] === "isa" && parts[1])  return { type: "isa-domain", idx: parts[1] };
-    if (parts[0] === "isa")              return { type: "isa" };
-    if (parts[0] === "about")            return { type: "about" };
-    if (parts[0] === "roadmap")          return { type: "roadmap" };
-    if (parts[0] === "leadership")       return { type: "leadership" };
-    if (parts[0] === "sc8")              return { type: "sc8" };
-    if (parts[0] === "site-visit")       return { type: "site-visit" };
-    if (parts[0] === "ascend")           return { type: "ascend" };
-    return { type: "home" };
+  const { view, searchQuery } = useMemo(() => {
+    // Strip ?query off path for routing, but capture for search
+    const hashStr = route;
+    const [pathPart, queryStr] = hashStr.split("?");
+    const params = new URLSearchParams(queryStr || "");
+    const searchQuery = params.get("q") || "";
+    const parts = pathPart.split("/").filter(Boolean);
+    let view;
+    if (parts.length === 0)                                          view = { type: "home" };
+    else if (parts[0] === "s"  && parts[1])                          view = { type: "subcommittee", key: parts[1] };
+    else if (parts[0] === "e"  && parts[1])                          view = { type: "element", id: parts[1] };
+    else if (parts[0] === "elements")                                view = { type: "all-elements" };
+    else if (parts[0] === "tasks")                                   view = { type: "all-tasks" };
+    else if (parts[0] === "mepos")                                   view = { type: "mepos" };
+    else if (parts[0] === "resources")                               view = { type: "resources" };
+    else if (parts[0] === "members")                                 view = { type: "members" };
+    else if (parts[0] === "glossary")                                view = { type: "glossary" };
+    else if (parts[0] === "phases")                                  view = { type: "phases" };
+    else if (parts[0] === "roster" && parts[1])                      view = { type: "roster", id: parts[1] };
+    else if (parts[0] === "dci" && parts[1] === "s" && parts[2])     view = { type: "dci-standard", id: parts[2] };
+    else if (parts[0] === "dci" && parts[1] === "e" && parts[2])     view = { type: "dci-element", id: parts[2] };
+    else if (parts[0] === "dci")                                     view = { type: "dci" };
+    else if (parts[0] === "isa" && parts[1])                         view = { type: "isa-domain", idx: parts[1] };
+    else if (parts[0] === "isa")                                     view = { type: "isa" };
+    else if (parts[0] === "about")                                   view = { type: "about" };
+    else if (parts[0] === "roadmap")                                 view = { type: "roadmap" };
+    else if (parts[0] === "leadership")                              view = { type: "leadership" };
+    else if (parts[0] === "sc8")                                     view = { type: "sc8" };
+    else if (parts[0] === "site-visit")                              view = { type: "site-visit" };
+    else if (parts[0] === "ascend")                                  view = { type: "ascend" };
+    else if (parts[0] === "search")                                  view = { type: "search" };
+    else                                                             view = { type: "home" };
+    return { view, searchQuery };
   }, [route]);
 
   const trail = trailFor(view, navigate);
@@ -234,6 +496,7 @@ const App = () => {
         {view.type === "sc8"                && <AllSubcommitteesView navigate={navigate} />}
         {view.type === "site-visit"         && <SiteVisitView navigate={navigate} />}
         {view.type === "ascend"             && <AscendView navigate={navigate} />}
+        {view.type === "search"             && <SearchView navigate={navigate} initialQuery={searchQuery} key={searchQuery ? "" : "blank"} />}
       </main>
 
       <footer className="app-footer">
@@ -274,8 +537,7 @@ const App = () => {
         }} />
       </TweaksPanel>
 
-      <BottomBar route={route} navigate={navigate} onSearch={() => setSearchOpen(true)} />
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} navigate={navigate} />
+      <BottomBar route={route} navigate={navigate} />
     </>
   );
 };

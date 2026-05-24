@@ -23,6 +23,8 @@ window.LCME_GLOSSARY = {
       body: "A signed agreement governing the relationship between the medical school and a clinical site." },
     { letter: "A", term: "AI", expansion: "Artificial Intelligence",
       body: "(1) An Area of Concentration (AOC) thread within SSD. (2) Now explicitly required in the curriculum under the new Element 7.2: Table 7.2-4 requires learning objectives on appropriate use of AI in disease diagnosis and management. *(Note: \"AI\" is also used informally as an abbreviation for **Acting Internship** — read by context.)*" },
+    { letter: "A", term: "AMBOSS",
+      body: "A third-party medical learning and clinical reference platform — a knowledge library combined with a question bank — widely used by ISMMS students alongside the formal curriculum." },
     { letter: "A", term: "AOC", expansion: "Area of Concentration",
       body: "Essential content threaded throughout the four-year curriculum at varying intensities. Four AOCs: **PCA** (Patient-Centered Advocacy), **SSD** (Scientific & Scholarly Discovery), **LPI** (Leadership & Professional Identity Formation), **HDS** (Healthcare Delivery Science). Governed by the **Curriculum Integration Subcommittee (CIS)**. THINQ in Phase 1 consolidates AOC discussions and runs deep dives." },
     { letter: "A", term: "APEX", expansion: "Clinical Preceptorship Experience",

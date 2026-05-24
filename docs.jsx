@@ -522,7 +522,7 @@ const MembershipCard = ({ person, navigate }) => (
 );
 
 // ─── Doc search ───────────────────────────────────────────────────────
-const DocSearchBar = ({ placeholder, navigate, onlyISA = false, onlyDCI = false }) => {
+const DocSearchBar = ({ placeholder, navigate, onlyISA = false, onlyDCI = false, allData = false }) => {
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
   const inputRef = useRef(null);
@@ -575,8 +575,85 @@ const DocSearchBar = ({ placeholder, navigate, onlyISA = false, onlyDCI = false 
         }
       });
     }
-    setResults(out.slice(0, 50));
-  }, [q, onlyISA, onlyDCI]);
+    if (allData) {
+      const D = window.LCME_DATA || {};
+      // Subcommittees
+      for (const sub of Object.values(D.SUBCOMMITTEES || {})) {
+        if (sub.name.toLowerCase().includes(term) || (sub.blurb || "").toLowerCase().includes(term) || sub.short.toLowerCase().includes(term)) {
+          out.push({ kind: "subcommittee", label: sub.name, sub: snippet(sub.blurb || "", term), path: "/s/" + sub.key });
+        }
+        // Members
+        const people = [
+          ...sub.coChairs.map(m => ({ ...m, role: "Co-chair" })),
+          { ...sub.projectManager, role: "PM" },
+          ...sub.members.map(m => ({ ...m, role: "Member" })),
+        ];
+        for (const m of people) {
+          if ((m.name || "").toLowerCase().includes(term) || (m.email || "").toLowerCase().includes(term)) {
+            out.push({ kind: "member", label: m.name, sub: `${m.role} · ${sub.short} · ${m.email}`, path: "/s/" + sub.key });
+          }
+        }
+      }
+      // Local LCME elements (task-force-assigned)
+      for (const el of (D.ELEMENTS || [])) {
+        if (el.id.includes(term) || (el.title || "").toLowerCase().includes(term) || (el.changeSummary || "").toLowerCase().includes(term)) {
+          out.push({ kind: "element", label: `${el.id} ${el.title}`, sub: snippet(el.changeSummary || "", term), path: "/e/" + el.id });
+        }
+      }
+      // Tasks
+      for (const t of (D.TASKS || [])) {
+        if (t.id.toLowerCase().includes(term) || (t.description || "").toLowerCase().includes(term) || (t.category || "").toLowerCase().includes(term)) {
+          out.push({ kind: "task", label: `${t.id} · ${t.category}`, sub: snippet(t.description || "", term), path: "/e/" + t.element });
+        }
+      }
+      // MEPOs
+      for (const g of (D.MEPOS || [])) {
+        if ((g.domain || "").toLowerCase().includes(term)) {
+          out.push({ kind: "mepo", label: `MEPO domain: ${g.domain}`, path: "/mepos" });
+        }
+        for (const item of g.items || []) {
+          if (item.toLowerCase().includes(term)) {
+            out.push({ kind: "mepo", label: `MEPO · ${g.domain}`, sub: snippet(item, term), path: "/mepos" });
+          }
+        }
+      }
+      // Glossary
+      for (const entry of (window.LCME_GLOSSARY || [])) {
+        const t = (entry.term || "").toLowerCase();
+        const def = (entry.def || entry.definition || "").toLowerCase();
+        if (t.includes(term) || def.includes(term)) {
+          out.push({ kind: "glossary", label: entry.term, sub: snippet(entry.def || entry.definition || "", term), path: "/glossary" });
+        }
+      }
+      // Self-study reference pages (so the search overlay can jump there)
+      const refPages = [
+        { label: "About the self-study", path: "/about", keys: ["about", "self-study", "mission", "overview", "lenses"] },
+        { label: "The road to LCME", path: "/roadmap", keys: ["roadmap", "timeline", "milestone"] },
+        { label: "Leadership & roles", path: "/leadership", keys: ["leadership", "roles", "fal", "steering"] },
+        { label: "All 8 subcommittees", path: "/sc8", keys: ["subcommittee", "structure", "eight", "8"] },
+        { label: "Site visit prep", path: "/site-visit", keys: ["site visit", "surveyor", "october 2027"] },
+        { label: "The ASCEND curriculum", path: "/ascend", keys: ["ascend", "curriculum", "phase", "clerkship", "block", "eec"] },
+        { label: "ASCEND Phases roster", path: "/phases", keys: ["phase", "module", "clerkship", "roster"] },
+        { label: "Membership directory", path: "/members", keys: ["membership", "members", "directory"] },
+        { label: "Governance Org Chart", path: "/resources", keys: ["governance", "org chart", "reporting"] },
+      ];
+      for (const p of refPages) {
+        if (p.label.toLowerCase().includes(term) || p.keys.some(k => k.includes(term) || term.includes(k))) {
+          out.push({ kind: "page", label: p.label, path: p.path });
+        }
+      }
+    }
+    // Dedupe (kind+label+path)
+    const seen = new Set();
+    const deduped = [];
+    for (const r of out) {
+      const key = r.kind + "|" + r.label + "|" + r.path;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(r);
+    }
+    setResults(deduped.slice(0, 80));
+  }, [q, onlyISA, onlyDCI, allData]);
 
   return (
     <div className="doc-search">
@@ -633,6 +710,12 @@ function kindLabel(kind) {
     doc: "Doc",
     "isa-domain": "ISA",
     "isa-item": "ISA",
+    subcommittee: "Sub",
+    member: "Person",
+    task: "Task",
+    mepo: "MEPO",
+    glossary: "Term",
+    page: "Page",
   }[kind] || kind;
 }
 
