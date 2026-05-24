@@ -1339,14 +1339,21 @@ input, select, textarea {
   .app-main { padding-bottom: 92px; }
 }
 
-/* ─── Scroll sway: page + bottom bar drift gently horizontally ─────── */
+/* ─── Scroll sway: bottom bar drifts; page hero drifts on home only ─── */
 :root { --sway-main: 0px; --sway-bar: 0px; }
-html, body { overflow-x: hidden; }
-.app-main {
-  position: relative;
-  left: var(--sway-main, 0px);
-  transition: left 0.12s linear;
-  will-change: left;
+/* Sway only non-sticky content — apply to specific elements, NOT .app-main,
+   because any transform/position on an ancestor of position:sticky kills it. */
+.hero,
+.section > .home-pillow-grid,
+.section > .subcomm-vert-grid,
+.kickoff-hero,
+.subcomm-hero,
+.element-hero,
+.standard-hero,
+.phases-hero {
+  transform: translateX(var(--sway-main, 0px));
+  transition: transform 0.12s linear;
+  will-change: transform;
 }
 .bottom-bar {
   transform: translateX(var(--sway-bar, 0px));
@@ -1354,7 +1361,8 @@ html, body { overflow-x: hidden; }
   will-change: transform;
 }
 @media (prefers-reduced-motion: reduce) {
-  .app-main { left: 0 !important; }
+  .hero, .section > .home-pillow-grid, .section > .subcomm-vert-grid,
+  .kickoff-hero, .subcomm-hero, .element-hero, .standard-hero, .phases-hero,
   .bottom-bar { transform: none !important; }
 }
 

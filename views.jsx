@@ -723,85 +723,13 @@ const MEPOView = () => {
 // ─── Resources ─────────────────────────────────────────────────────────
 const ResourcesView = ({ navigate }) => (
   <>
-    <h1 className="h-display">Resources & references</h1>
-    <p className="lead">Key documents, dashboards, and reference material for the task force.</p>
-
-    <div className="grid grid--2">
-      <a className="card" href={RESOURCES[0].url} target="_blank" rel="noreferrer"
-        style={{ textDecoration: "none" }}>
-        <div className="row" style={{ gap: 12, marginBottom: 8 }}>
-          <span className="resource-tile__icon" style={{ width: 44, height: 44 }}>
-            <Icon name="compass" size={24} />
-          </span>
-          <h3 className="h-card" style={{ flex: 1 }}>ASCEND Curriculum Navigator <Icon name="external" size={14} /></h3>
-        </div>
-        <p style={{ color: "var(--ink-2)", fontSize: 14, margin: 0 }}>
-          Student-facing dashboard with phase, module, and EPO views. Use this to locate
-          where DCI-required content lives within the curriculum map.
-        </p>
-        <div className="row" style={{ marginTop: 10 }}>
-          <span className="chip">sinaiascend.github.io</span>
-        </div>
-      </a>
-
-      <a className="card" href={RESOURCES[2].url} target="_blank" rel="noreferrer"
-        style={{ textDecoration: "none" }}>
-        <div className="row" style={{ gap: 12, marginBottom: 8 }}>
-          <span className="resource-tile__icon" style={{ width: 44, height: 44 }}>
-            <Icon name="doc" size={24} />
-          </span>
-          <h3 className="h-card" style={{ flex: 1 }}>DCI Standards 6/7/8/9 Comparison</h3>
-        </div>
-        <p style={{ color: "var(--ink-2)", fontSize: 14, margin: 0 }}>
-          Element-by-element brief of what changed in the 2027-28 DCI vs. 2026-27. Source
-          for every "what changed" section across this site.
-        </p>
-        <div className="row" style={{ marginTop: 10 }}>
-          <span className="chip">PDF · Prepared for the Curricular Affairs Team</span>
-        </div>
-      </a>
-
-      <div className="card" style={{ gridColumn: "1 / -1" }}>
-        <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-          <span className="resource-tile__icon" style={{ width: 44, height: 44 }}>
-            <Icon name="tree" size={24} />
-          </span>
-          <h3 className="h-card" style={{ flex: 1 }}>ASCEND MD Curriculum Governance Org Chart</h3>
-        </div>
-        <p style={{ color: "var(--ink-2)", fontSize: 14, marginTop: 0 }}>
-          Reporting structure for the Dean for Medical Education, standing committees, and
-          the four EEC subcommittees referenced throughout the DCI narrative.
-        </p>
-        <img src="assets/governance-org-chart.png" alt="ASCEND MD Curriculum Governance Org Chart"
-          style={{ width: "100%", borderRadius: "var(--r)", border: "1px solid var(--line)" }} />
-      </div>
-
-      <button className="card" onClick={() => navigate("/mepos")} style={{ textAlign: "left" }}>
-        <div className="row" style={{ gap: 12, marginBottom: 8 }}>
-          <span className="resource-tile__icon" style={{ width: 44, height: 44 }}>
-            <Icon name="target" size={24} />
-          </span>
-          <h3 className="h-card" style={{ flex: 1 }}>Medical Education Program Objectives</h3>
-        </div>
-        <p style={{ color: "var(--ink-2)", fontSize: 14, margin: 0 }}>
-          All 23 MEPOs grouped by competency domain. Central to Element 6.1 linkage work
-          and 8.4 outcome evaluation.
-        </p>
-      </button>
-
-      <button className="card" onClick={() => navigate("/elements")} style={{ textAlign: "left" }}>
-        <div className="row" style={{ gap: 12, marginBottom: 8 }}>
-          <span className="resource-tile__icon" style={{ width: 44, height: 44 }}>
-            <Icon name="list" size={24} />
-          </span>
-          <h3 className="h-card" style={{ flex: 1 }}>All LCME Elements</h3>
-        </div>
-        <p style={{ color: "var(--ink-2)", fontSize: 14, margin: 0 }}>
-          Cross-subcommittee directory of every element assigned to the task force, with
-          change-level chips and task counts.
-        </p>
-      </button>
-    </div>
+    <h1 className="h-display">ASCEND MD Curriculum Governance Org Chart</h1>
+    <p className="lead">
+      Reporting structure for the Dean for Medical Education, standing committees, and
+      the four EEC subcommittees referenced throughout the DCI narrative.
+    </p>
+    <img src="assets/governance-org-chart.png" alt="ASCEND MD Curriculum Governance Org Chart"
+      style={{ width: "100%", borderRadius: "var(--r)", border: "1px solid var(--line)", display: "block" }} />
   </>
 );
 
